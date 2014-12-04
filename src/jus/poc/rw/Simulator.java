@@ -85,5 +85,6 @@ public class Simulator{
 		init((args.length==1)?args[0]:OPTIONFILENAME);
 		
 		//to be completed
+		System.out.println(Simulator.nbResources);
 	}
 }
