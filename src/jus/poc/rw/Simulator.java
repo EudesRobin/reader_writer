@@ -1,11 +1,21 @@
 package jus.poc.rw;
 
+import jus.poc.rw.control.IObservator;
+import jus.poc.rw.control.Observator;
+import jus.poc.rw.deadlock.Detector;
+import jus.poc.rw.deadlock.IDetector;
+
+
 /**
  * Main class for the Readers/Writers application. This class firstly creates a pool of read/write resources  
  * implementing interface IResource. Then it creates readers and writers operating on these resources.
  * @author P.Morat & F.Boyer
  */
 public class Simulator{
+	
+	static Reader[] reader_tab;
+	static Writer[] writer_tab;
+	
 	protected static final String OPTIONFILENAME = "option.xml";
 	/** the version of the protocole to be used */
 	protected static String version;
@@ -66,6 +76,7 @@ public class Simulator{
 		version = option.getProperty("version");
 		nbReaders = Math.max(0,new Aleatory(option.get("nbAverageReaders"),option.get("nbDeviationReaders")).next());
 		nbWriters = Math.max(0,new Aleatory(option.get("nbAverageWriters"),option.get("nbDeviationWriters")).next());
+		//nbResources = option.get("nbAverageResources");
 		nbResources = Math.max(0,new Aleatory(option.get("nbAverageResources"),option.get("nbDeviationResources")).next());
 		nbSelection = Math.max(0,Math.min(new Aleatory(option.get("nbAverageSelection"),option.get("nbDeviationSelection")).next(),nbResources));
 		readerAverageUsingTime = Math.max(0,option.get("readerAverageUsingTime"));
@@ -84,6 +95,33 @@ public class Simulator{
 		// set the application parameters
 		init((args.length==1)?args[0]:OPTIONFILENAME);
 		
-		//to be completed
+		//init detector
+		
+		//init observator
+		
+		//init ressource pool
+		jus.poc.rw.ResourcePool p = new ResourcePool(Simulator.nbResources,null,null,"jus.poc.rw.v1.RWrsc");
+		
+		Simulator.reader_tab = new Reader[Simulator.nbReaders];
+		for(int i = 0;i<Simulator.nbReaders;i++){
+			Simulator.reader_tab[i] = new Reader(new Aleatory(Simulator.readerAverageUsingTime,Simulator.readerDeviationUsingTime),
+					new Aleatory(Simulator.readerAverageVacationTime,Simulator.readerDeviationVacationTime),
+					new Aleatory(0,0),
+					p.selection(Simulator.nbResources),
+					null);
+		}
+		
+		
+		Simulator.writer_tab = new Writer[Simulator.nbWriters];
+		for(int i=0;i<Simulator.nbWriters;i++){
+			Simulator.writer_tab[i] = new Writer(new Aleatory(Simulator.writerAverageUsingTime,Simulator.writerDeviationUsingTime),
+					new Aleatory(Simulator.writerAverageVacationTime,Simulator.writerDeviationVacationTime),
+					new Aleatory(Simulator.writerAverageIteration,Simulator.writerDeviationIteration),
+					p.selection(Simulator.nbResources),
+					null);
+		}
+		
+		
+		
 	}
 }
