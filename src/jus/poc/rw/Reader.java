@@ -1,14 +1,13 @@
-package jus.poc.rw.v1;
+package jus.poc.rw;
 
-import jus.poc.rw.Actor;
 import jus.poc.rw.Aleatory;
 import jus.poc.rw.IResource;
 import jus.poc.rw.control.IObservator;
 import jus.poc.rw.deadlock.DeadLockException;
 
-public class Writer extends Actor {
+public class Reader extends Actor {
 
-	public Writer(Aleatory useLaw, Aleatory vacationLaw, Aleatory iterationLaw,
+	public Reader(Aleatory useLaw, Aleatory vacationLaw, Aleatory iterationLaw,
 			IResource[] selection, IObservator observator) {
 		super(useLaw, vacationLaw, iterationLaw, selection, observator);
 		// TODO Auto-generated constructor stub
