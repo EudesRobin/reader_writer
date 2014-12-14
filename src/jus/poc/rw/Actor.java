@@ -55,6 +55,7 @@ public abstract class Actor extends Thread{
 			release();
 		}
 		this.observator.stopActor(this); // Event Stop actor
+		System.out.println("L'acteur n°"+this.ident+"a effectué tout ses accès [TERMINAISON]");
 	}
 	/**
 	 * the temporization for using the ressources.
@@ -85,11 +86,11 @@ public abstract class Actor extends Thread{
 	 */
 	private void release(){
 		for(IResource rsc:resources){
-			try {
-				this.acquire(rsc);
-			} catch (InterruptedException | DeadLockException e) {
-				e.printStackTrace();
-			}
+				try {
+					this.release(rsc);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 	/**

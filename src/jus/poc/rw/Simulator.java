@@ -1,9 +1,7 @@
 package jus.poc.rw;
 
-import jus.poc.rw.control.IObservator;
+
 import jus.poc.rw.control.Observator;
-import jus.poc.rw.deadlock.Detector;
-import jus.poc.rw.deadlock.IDetector;
 
 
 /**
@@ -12,10 +10,7 @@ import jus.poc.rw.deadlock.IDetector;
  * @author P.Morat & F.Boyer
  */
 public class Simulator{
-	
-	static Reader[] reader_tab;
-	static Writer[] writer_tab;
-	
+
 	protected static final String OPTIONFILENAME = "option.xml";
 	/** the version of the protocole to be used */
 	protected static String version;
@@ -76,7 +71,6 @@ public class Simulator{
 		version = option.getProperty("version");
 		nbReaders = Math.max(0,new Aleatory(option.get("nbAverageReaders"),option.get("nbDeviationReaders")).next());
 		nbWriters = Math.max(0,new Aleatory(option.get("nbAverageWriters"),option.get("nbDeviationWriters")).next());
-		//nbResources = option.get("nbAverageResources");
 		nbResources = Math.max(0,new Aleatory(option.get("nbAverageResources"),option.get("nbDeviationResources")).next());
 		nbSelection = Math.max(0,Math.min(new Aleatory(option.get("nbAverageSelection"),option.get("nbDeviationSelection")).next(),nbResources));
 		readerAverageUsingTime = Math.max(0,option.get("readerAverageUsingTime"));
@@ -94,30 +88,48 @@ public class Simulator{
 	public static void main(String... args) throws Exception{
 		// set the application parameters
 		init((args.length==1)?args[0]:OPTIONFILENAME);
+
+		/* Init Observator */
+		Observator observator = new Observator(null); // controler = null pour l'instant
+		observator.init(nbReaders+nbWriters,nbResources);
 		
-		//init ressource pool
-		jus.poc.rw.ResourcePool p = new ResourcePool(Simulator.nbResources,null,null,"jus.poc.rw.v1.RWrsc");
 		
-		Simulator.reader_tab = new Reader[Simulator.nbReaders];
-		for(Reader current:reader_tab){
-			current = new Reader(new Aleatory(Simulator.readerAverageUsingTime,Simulator.readerDeviationUsingTime),
-					new Aleatory(Simulator.readerAverageVacationTime,Simulator.readerDeviationVacationTime),
+
+		/* init ressource pool*/
+		ResourcePool pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
+
+
+		Actor[] array_rw = new Actor[nbReaders+nbWriters];
+
+		/* Init Readers */
+		int n=0;
+		while(n<nbReaders){
+			array_rw[n] = new Reader(new Aleatory(readerAverageUsingTime,readerDeviationUsingTime),
+					new Aleatory(readerAverageVacationTime,readerDeviationVacationTime),
 					new Aleatory(0,0),
-					p.selection(Simulator.nbResources),
-					null);
+					pool.selection(nbSelection),
+					observator);
+			n++;
 		}
-		
-		
-		Simulator.writer_tab = new Writer[Simulator.nbWriters];
-		for(Writer current:writer_tab){
-			current = new Writer(new Aleatory(Simulator.writerAverageUsingTime,Simulator.writerDeviationUsingTime),
-					new Aleatory(Simulator.writerAverageVacationTime,Simulator.writerDeviationVacationTime),
-					new Aleatory(Simulator.writerAverageIteration,Simulator.writerDeviationIteration),
-					p.selection(Simulator.nbResources),
-					null);
+
+		while(n<nbReaders+nbWriters){
+			array_rw[n] = new Writer(new Aleatory(writerAverageUsingTime,writerDeviationUsingTime),
+					new Aleatory(writerAverageVacationTime,writerDeviationVacationTime),
+					new Aleatory(writerAverageIteration,writerDeviationIteration),
+					pool.selection(nbSelection),
+					observator);
+			n++;
 		}
+
+		/* On mélange les acteurs dans le tableau...*/
+		mixe(array_rw);
 		
-		
+
+		/* On lance la simu !*/
+		for(Actor acteur:array_rw){
+			acteur.start();	
+		}
 		
 	}
+
 }

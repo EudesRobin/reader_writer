@@ -10,20 +10,19 @@ public class Reader extends Actor {
 	public Reader(Aleatory useLaw, Aleatory vacationLaw, Aleatory iterationLaw,
 			IResource[] selection, IObservator observator) {
 		super(useLaw, vacationLaw, iterationLaw, selection, observator);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected void acquire(IResource resource) throws InterruptedException,
 			DeadLockException {
-		// TODO Auto-generated method stub
-
+		super.observator.requireResource(this, resource);; // Event demande rsc
+		resource.beginR(this); // demande rsc
 	}
 
 	@Override
 	protected void release(IResource resource) throws InterruptedException {
-		// TODO Auto-generated method stub
-
+		resource.endR(this); // free
+		super.observator.releaseResource(this,resource); // Event rsc libre
 	}
 
 }

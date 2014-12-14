@@ -2,8 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
 	<comment> All the parameters of the application</comment>
-	<!-- the version used to operate the protocol -->
-	<entry key="version">v1</entry>
+	<entry key="version">v1</entry> <!-- the version used to operate the protocol -->
 	<!-- the law to determine the number of readers involve in the simulation -->
 	<entry key="nbAverageReaders">5</entry>
 	<entry key="nbDeviationReaders">0</entry>
@@ -11,7 +10,7 @@
 	<entry key="nbAverageWriters">2</entry>
 	<entry key="nbDeviationWriters">0</entry>
 	<!-- the law to determine the number of resources involve in the simulation -->
-	<entry key="nbAverageResources">5</entry>
+	<entry key="nbAverageResources">1</entry>
 	<entry key="nbDeviationResources">0</entry>
 	<!-- the law to determine the number of resources used by an actor -->
 	<entry key="nbAverageSelection">1</entry>
