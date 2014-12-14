@@ -47,7 +47,7 @@ public abstract class Actor extends Thread{
 	 * the behavior of an actor accessing to a resource.
 	 */
 	public void run(){
-		// to be completed
+		this.observator.startActor(this); // Event Start actor
 		for(accessRank=1; accessRank!=nbIteration; accessRank++) {
 			temporizationVacation(vacationLaw.next());
 			acquire();
@@ -71,20 +71,34 @@ public abstract class Actor extends Thread{
 	 * the acquisition stage of the resources.
 	 */
 	private void acquire(){
-		// to be completed
+		for(IResource rsc:resources){
+			try {
+				this.acquire(rsc);
+			} catch (InterruptedException | DeadLockException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	/**
 	 * the release stage of the resources prevously acquired
 	 */
 	private void release(){
-		// to be completed
+		for(IResource rsc:resources){
+			try {
+				this.acquire(rsc);
+			} catch (InterruptedException | DeadLockException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	/**
 	 * Restart the actor at the start of his execution, having returned all the resources acquired.
 	 * @param resource the resource at the origin of the deadlock.
 	 */
 	protected void restart(IResource resource) {
-		// to be completed
+		this.observator.restartActor(this,resource); // Event restart Actor
+		this.release();
+		this.run();
 	}
 	/**
 	 * acquisition proceeding specific to the type of actor.

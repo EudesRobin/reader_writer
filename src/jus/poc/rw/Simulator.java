@@ -95,16 +95,12 @@ public class Simulator{
 		// set the application parameters
 		init((args.length==1)?args[0]:OPTIONFILENAME);
 		
-		//init detector
-		
-		//init observator
-		
 		//init ressource pool
 		jus.poc.rw.ResourcePool p = new ResourcePool(Simulator.nbResources,null,null,"jus.poc.rw.v1.RWrsc");
 		
 		Simulator.reader_tab = new Reader[Simulator.nbReaders];
-		for(int i = 0;i<Simulator.nbReaders;i++){
-			Simulator.reader_tab[i] = new Reader(new Aleatory(Simulator.readerAverageUsingTime,Simulator.readerDeviationUsingTime),
+		for(Reader current:reader_tab){
+			current = new Reader(new Aleatory(Simulator.readerAverageUsingTime,Simulator.readerDeviationUsingTime),
 					new Aleatory(Simulator.readerAverageVacationTime,Simulator.readerDeviationVacationTime),
 					new Aleatory(0,0),
 					p.selection(Simulator.nbResources),
@@ -113,8 +109,8 @@ public class Simulator{
 		
 		
 		Simulator.writer_tab = new Writer[Simulator.nbWriters];
-		for(int i=0;i<Simulator.nbWriters;i++){
-			Simulator.writer_tab[i] = new Writer(new Aleatory(Simulator.writerAverageUsingTime,Simulator.writerDeviationUsingTime),
+		for(Writer current:writer_tab){
+			current = new Writer(new Aleatory(Simulator.writerAverageUsingTime,Simulator.writerDeviationUsingTime),
 					new Aleatory(Simulator.writerAverageVacationTime,Simulator.writerDeviationVacationTime),
 					new Aleatory(Simulator.writerAverageIteration,Simulator.writerDeviationIteration),
 					p.selection(Simulator.nbResources),
