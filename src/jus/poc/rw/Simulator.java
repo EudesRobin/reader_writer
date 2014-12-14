@@ -144,18 +144,7 @@ public class Simulator{
 		 *  le compteur démarre à 1, le nb d'ité est 0 pour les lecteurs ( et le compteur augmente tjrs,
 		 *  donc ne vaudra jamais 0 ... 
 		 */
-		int nbWriters_end=0;
-		if(version.equalsIgnoreCase("v1")){
-			while(nbWriters_end!=nbWriters){
-				nbWriters_end =0;
-				for(Actor act:array_rw){
-					if(act.getClass().getSimpleName().equalsIgnoreCase("Writer") && !act.isAlive()){
-						nbWriters_end++;
-					}
-				}
-			}
-			/* Tout les writers ont effectués leurs ecritures, on termine les lecteurs... */
-		}
+
 	}
 
 }
