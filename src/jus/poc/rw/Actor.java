@@ -54,6 +54,7 @@ public abstract class Actor extends Thread{
 			temporizationUse(useLaw.next());
 			release();
 		}
+		this.observator.stopActor(this); // Event Stop actor
 	}
 	/**
 	 * the temporization for using the ressources.
