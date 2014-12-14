@@ -4,6 +4,7 @@ package jus.poc.rw;
 import jus.poc.rw.control.Observator;
 
 
+
 /**
  * Main class for the Readers/Writers application. This class firstly creates a pool of read/write resources  
  * implementing interface IResource. Then it creates readers and writers operating on these resources.
@@ -94,7 +95,6 @@ public class Simulator{
 		observator.init(nbReaders+nbWriters,nbResources);
 		
 		
-
 		/* init ressource pool*/
 		ResourcePool pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
 
@@ -109,6 +109,7 @@ public class Simulator{
 					new Aleatory(0,0),
 					pool.selection(nbSelection),
 					observator);
+			
 			n++;
 		}
 
@@ -130,6 +131,31 @@ public class Simulator{
 			acteur.start();	
 		}
 		
+		/* COMMENTS V1 - OBJECTIF 2 
+		 * 
+		 * Les ReentrantReadWriteLock utilisés nous garantissent le fonctionnement suivant :
+		 *  n readers sur une ressource ou 1 writer en simultané sur une ressource.
+		 *  Grace aux affichages fournis durant l'execution, on peut voir que plusieurs lecteurs vont acceder
+		 *  à une même ressource, sans que le précédant lecteur l'ai libéré. En revanche, un writer ne pourra
+		 *  accéder à la ressource que si personne l'utilise et personne d'autre que lui pourra l'utiliser
+		 *  tant qu'il ne l'a pas libérée.
+		 *  
+		 * rmq : les lecteurs terminent jamais, car la cond limite de la boucle du run jamais atteinte
+		 *  le compteur démarre à 1, le nb d'ité est 0 pour les lecteurs ( et le compteur augmente tjrs,
+		 *  donc ne vaudra jamais 0 ... 
+		 */
+		int nbWriters_end=0;
+		if(version.equalsIgnoreCase("v1")){
+			while(nbWriters_end!=nbWriters){
+				nbWriters_end =0;
+				for(Actor act:array_rw){
+					if(act.getClass().getSimpleName().equalsIgnoreCase("Writer") && !act.isAlive()){
+						nbWriters_end++;
+					}
+				}
+			}
+			/* Tout les writers ont effectués leurs ecritures, on termine les lecteurs... */
+		}
 	}
 
 }
