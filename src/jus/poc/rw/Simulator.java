@@ -2,6 +2,7 @@ package jus.poc.rw;
 
 
 import jus.poc.rw.control.Observator;
+import jus.poc.rw.v2.RWrsc;
 
 
 
@@ -12,7 +13,10 @@ import jus.poc.rw.control.Observator;
  */
 public class Simulator{
 
-	protected static final String OPTIONFILENAME = "option.xml";
+	/** Nombre de lecture a effectuer avant qu'un writer puisse de nouveau écrire */
+	public static final int NB_LECTURE = 5;
+
+	protected static String OPTIONFILENAME = "optionv1.xml";
 	/** the version of the protocole to be used */
 	protected static String version;
 	/** the number of readers involve in the simulation */
@@ -93,8 +97,8 @@ public class Simulator{
 		/* Init Observator */
 		Observator observator = new Observator(null); // controler = null pour l'instant
 		observator.init(nbReaders+nbWriters,nbResources);
-		
-		
+
+
 		/* init ressource pool*/
 		ResourcePool pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
 
@@ -109,7 +113,7 @@ public class Simulator{
 					new Aleatory(0,0),
 					pool.selection(nbSelection),
 					observator);
-			
+
 			n++;
 		}
 
@@ -124,26 +128,71 @@ public class Simulator{
 
 		/* On mélange les acteurs dans le tableau...*/
 		mixe(array_rw);
-		
+
 
 		/* On lance la simu !*/
 		for(Actor acteur:array_rw){
 			acteur.start();	
 		}
-		
-		/* COMMENTS V1 - OBJECTIF 2 
-		 * 
-		 * Les ReentrantReadWriteLock utilisés nous garantissent le fonctionnement suivant :
-		 *  n readers sur une ressource ou 1 writer en simultané sur une ressource.
-		 *  Grace aux affichages fournis durant l'execution, on peut voir que plusieurs lecteurs vont acceder
-		 *  à une même ressource, sans que le précédant lecteur l'ai libéré. En revanche, un writer ne pourra
-		 *  accéder à la ressource que si personne l'utilise et personne d'autre que lui pourra l'utiliser
-		 *  tant qu'il ne l'a pas libérée.
-		 *  
-		 * rmq : les lecteurs terminent jamais, car la cond limite de la boucle du run jamais atteinte
-		 *  le compteur démarre à 1, le nb d'ité est 0 pour les lecteurs ( et le compteur augmente tjrs,
-		 *  donc ne vaudra jamais 0 ... 
-		 */
+
+
+
+		if(version.equalsIgnoreCase("v1")){
+			/* V1 */
+			/* COMMENTS V1 - OBJECTIF 2 
+			 * 
+			 * Les ReentrantReadWriteLock utilisés nous garantissent le fonctionnement suivant :
+			 *  n readers sur une ressource ou 1 writer en simultané sur une ressource.
+			 *  Grace aux affichages fournis durant l'execution, on peut voir que plusieurs lecteurs vont acceder
+			 *  à une même ressource, sans que le précédant lecteur l'ai libéré. En revanche, un writer ne pourra
+			 *  accéder à la ressource que si personne l'utilise et personne d'autre que lui pourra l'utiliser
+			 *  tant qu'il ne l'a pas libérée.
+			 *  
+			 * rmq : les lecteurs terminent jamais, car la cond limite de la boucle du run jamais atteinte
+			 *  le compteur démarre à 1, le nb d'ité est 0 pour les lecteurs ( et le compteur augmente tjrs,
+			 *  donc ne vaudra jamais 0 ... 
+			 */
+		}else if(version.equalsIgnoreCase("v2")){
+			/* V2 */
+			/* Compteur de redacteurs ayants terminés */
+			int fin_write=0;
+
+			while(fin_write!=nbWriters){
+				fin_write=0;
+				for(Actor acteur:array_rw){
+					if(acteur.getClass().getSimpleName().equalsIgnoreCase("Writer") && !acteur.isAlive()){
+						/* Si le thread associe au writer est "terminé" */
+						fin_write++;
+					}
+				}
+			}
+
+			System.out.println("(REDACTEUR) ALL ENDED");
+
+			IResource[] tab_rsc = pool.selection(nbResources);
+			System.out.println("val_NR " + ((RWrsc)tab_rsc[0]).get_NR() );
+
+			int j=0;
+			while(!array_rw[j].isAlive() && j<array_rw.length){
+				j++;
+			}
+
+			for(IResource rsc:tab_rsc){
+				while(array_rw[j].isAlive()){
+					if( ((RWrsc)rsc).get_NR()==0 ){
+						System.out.println("Nombre minimal de lecture après ecriture atteinte, on close.");
+						for(Actor acteur:array_rw){
+							if(acteur.isAlive()){
+								acteur.stop();
+								System.out.println("(LECTEURS) Terminaison Acteur n°" + acteur.ident);
+							}
+						}
+					}
+				}
+			}
+
+
+		}
 
 	}
 

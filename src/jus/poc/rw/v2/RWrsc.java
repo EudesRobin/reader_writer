@@ -1,52 +1,73 @@
-package jus.poc.rw.v1;
+package jus.poc.rw.v2;
 
 import jus.poc.rw.Actor;
 import jus.poc.rw.Resource;
+import jus.poc.rw.Simulator;
 import jus.poc.rw.control.IObservator;
 import jus.poc.rw.deadlock.DeadLockException;
 import jus.poc.rw.deadlock.IDetector;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RWrsc extends Resource {
-	// Notre verrou
-	ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	/* nombre de lecteurs, redacteur*/
+	int readers,writers,N_R;
 
 	public RWrsc(IDetector detector, IObservator observator) {
 		super(detector, observator);
+		readers =0;
+		writers =0;
+		N_R =0;
 	}
 
 	@Override
-	public void beginR(Actor arg0) throws InterruptedException,
+	public synchronized void beginR(Actor arg0) throws InterruptedException,
 			DeadLockException {
-		readWriteLock.readLock().lock();
-		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
+		while(writers>0){
+			wait();
+		}
+		readers++;
+		System.out.println("(LECTEUR) L'acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
 
 	@Override
-	public void beginW(Actor arg0) throws InterruptedException,
+	public synchronized void beginW(Actor arg0) throws InterruptedException,
 			DeadLockException {
-		readWriteLock.writeLock().lock();
+		while(writers>0 || readers>0 || N_R>0){
+			wait();
+		}
+		writers++;
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
 
 	@Override
-	public void endR(Actor arg0) throws InterruptedException {
-		readWriteLock.readLock().unlock();
+	public synchronized void endR(Actor arg0) throws InterruptedException {
+		readers--;
+		if(N_R>0){
+			N_R--;
+		}
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// notif event deja effectue par la classe Reader
+		notifyAll();
+
 	}
 
 	@Override
-	public void endW(Actor arg0) throws InterruptedException {
-		readWriteLock.writeLock().unlock();
+	public synchronized void endW(Actor arg0) throws InterruptedException {
+		writers--;
+		N_R=Simulator.NB_LECTURE;
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// Notif event deja effectue par la classe Writer
+		notifyAll();
 	}
 
 	@Override
 	public void init(Object arg0) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException("(V1) methode init non suportee..\n");
+		throw new UnsupportedOperationException("(V2) Methode init non suportee...\n");
 	}
+	
+	public int get_NR(){
+		return N_R;
+	}
+
 }
