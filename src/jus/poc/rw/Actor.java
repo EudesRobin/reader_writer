@@ -22,10 +22,14 @@ public abstract class Actor extends Thread{
 	protected Aleatory vacationLaw;
 	/** the observator */
 	protected IObservator observator;
-	/** the number of iteration to do, -1 means infinity */
+	/** the number of iteration to do, 0 means infinity */
 	protected int nbIteration;
 	/** the rank of the last access done or under execution */
 	protected int accessRank;
+	
+	/* MODIF */
+	/* Pour arrêter les thread proprepement, sans être unsafe (à l'inverse de la méthode stop de thread */
+	protected boolean runable;
 	/**
 	 * Constructor
 	 * @param useLaw the gaussian law for using delay
@@ -42,13 +46,14 @@ public abstract class Actor extends Thread{
 		nbIteration=iterationLaw.next();
 		setName(getClass().getSimpleName()+"-"+ident());
 		this.observator=observator;
+		this.runable=true;
 	}
 	/**
 	 * the behavior of an actor accessing to a resource.
 	 */
 	public void run(){
 		this.observator.startActor(this); // Event Start actor
-		for(accessRank=1; accessRank!=nbIteration; accessRank++) {
+		for(accessRank=1; accessRank!=nbIteration && runable; accessRank++) {
 			temporizationVacation(vacationLaw.next());
 			acquire();
 			temporizationUse(useLaw.next());
@@ -125,4 +130,8 @@ public abstract class Actor extends Thread{
 	 * @return the rank of the last access done or under execution
 	 */
 	public final int accessRank(){return accessRank;}
+	
+	public void clean_stop(){
+		runable=false;
+	}
 }

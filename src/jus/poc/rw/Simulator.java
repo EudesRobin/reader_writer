@@ -150,8 +150,32 @@ public class Simulator{
 			 *  
 			 * rmq : les lecteurs terminent jamais, car la cond limite de la boucle du run jamais atteinte
 			 *  le compteur démarre à 1, le nb d'ité est 0 pour les lecteurs ( et le compteur augmente tjrs,
-			 *  donc ne vaudra jamais 0 ... 
+			 *  donc ne vaudra jamais 0 ...
+			 *  
+			 *   >> CHOIX : une fois que tout les rédacteurs ont effectués leurs taches, on termine tt les lectures.
 			 */
+			int fin_write=0;
+
+			while(fin_write!=nbWriters){
+				fin_write=0;
+				for(Actor acteur:array_rw){
+					if(acteur.getClass().getSimpleName().equalsIgnoreCase("Writer") && !acteur.isAlive()){
+						/* Si le thread associe au writer est "terminé" */
+						fin_write++;
+					}
+				}
+			}
+
+			System.out.println("(REDACTEUR) TOUS LES REDACTEURS ONT TERMINE");
+			System.out.println("On termine maintenant tout les lecteurs"); // on loop à l'infini, sinon...
+			for(Actor acteur:array_rw){
+				if(acteur.isAlive()){
+					acteur.clean_stop();
+				}
+			}
+			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
+
+			
 		}else if(version.equalsIgnoreCase("v2")){
 			/* V2 */
 			/* Compteur de redacteurs ayants terminés */
@@ -167,32 +191,34 @@ public class Simulator{
 				}
 			}
 
-			System.out.println("(REDACTEUR) ALL ENDED");
+			System.out.println("TOUS LES REDACTEURS ONT TERMINE");
 
+			/* On selectionne toute nos ressources à disposition */
 			IResource[] tab_rsc = pool.selection(nbResources);
-			System.out.println("val_NR " + ((RWrsc)tab_rsc[0]).get_NR() );
 
-			int j=0;
-			while(!array_rw[j].isAlive() && j<array_rw.length){
-				j++;
-			}
-
+			/* Pour chaque ressource, on regarde si le nb de lecture minimale a été effectuée */
 			for(IResource rsc:tab_rsc){
-				while(array_rw[j].isAlive()){
-					if( ((RWrsc)rsc).get_NR()==0 ){
-						System.out.println("Nombre minimal de lecture après ecriture atteinte, on close.");
-						for(Actor acteur:array_rw){
-							if(acteur.isAlive()){
-								acteur.stop();
-								System.out.println("(LECTEURS) Terminaison Acteur n°" + acteur.ident);
-							}
+				for(Actor acteur:array_rw){
+					if(acteur.isAlive()){
+						if(((RWrsc)rsc).get_NR()==0){
+							acteur.clean_stop(); /* Thread safe stop :) */
 						}
 					}
 				}
 			}
+			
+			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 
 
+		}else if(version.equalsIgnoreCase("v3")){
+			/* V3 */
+			/*
+			 * LOW_WRITE : 
+			 * HIGH_WRITE :
+			 */
 		}
+		
+		System.out.println("Fin de la simulation");
 
 	}
 
