@@ -16,7 +16,7 @@ public class Simulator{
 	/** Nombre de lecture a effectuer avant qu'un writer puisse de nouveau écrire */
 	public static final int NB_LECTURE = 5;
 
-	protected static String OPTIONFILENAME = "optionv1.xml";
+	protected static String OPTIONFILENAME = "optionv3.xml";
 	/** the version of the protocole to be used */
 	protected static String version;
 	/** the number of readers involve in the simulation */
@@ -137,7 +137,7 @@ public class Simulator{
 
 
 
-		if(version.equalsIgnoreCase("v1")){
+		if(version.equalsIgnoreCase("v1")||version.equalsIgnoreCase("v3")){
 			/* V1 */
 			/* COMMENTS V1 - OBJECTIF 2 
 			 * 
@@ -210,16 +210,19 @@ public class Simulator{
 			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 
 
-		}else if(version.equalsIgnoreCase("v3")){
+		}/*else if(version.equalsIgnoreCase("v3")){
 			/* V3 */
 			/*
 			 * LOW_WRITE : 
 			 * HIGH_WRITE :
-			 */
-		}
+			 
+		} */
 		
 		System.out.println("Fin de la simulation");
 
 	}
 
+	public static String getpolicy(){
+		return policy;
+	}
 }
