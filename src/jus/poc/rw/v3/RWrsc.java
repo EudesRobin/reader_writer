@@ -13,11 +13,19 @@ public class RWrsc extends Resource {
 	
 	int nb_readers;
 	int nb_writers;
+
 	Semaphore MutexW;
 	Semaphore MutexR;
-	Semaphore SasR;
-	Semaphore SasW;
 	Semaphore rsc;
+
+	/**
+	 * Pour bloquer les lecteurs HIGH_WRITE */
+	Semaphore SasR;
+	
+	
+	/**
+	 * Nombre de lectures restantes (pour LOW_WRITE)
+	 */
 	int nr;
 	
 	public RWrsc(IDetector detector, IObservator observator) {
@@ -41,7 +49,7 @@ public class RWrsc extends Resource {
 		
 		MutexR.acquire();
 		if(nb_readers++==0){
-			rsc.acquire();
+			rsc.acquire(); // Le premier lecteur prend le verrou sur la rsc
 		}
 		MutexR.release();
 		
