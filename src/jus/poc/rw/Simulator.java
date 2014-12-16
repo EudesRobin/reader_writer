@@ -213,8 +213,8 @@ public class Simulator{
 		}/*else if(version.equalsIgnoreCase("v3")){
 			/* V3 */
 			/*
-			 * LOW_WRITE : 
-			 * HIGH_WRITE :
+			 * LOW_WRITE : C'est la V1, pas de prio spéciales
+			 * HIGH_WRITE : On rajoute une condition
 			 
 		} */
 		

@@ -1,7 +1,5 @@
 package jus.poc.rw.v3;
 
-import java.util.concurrent.Semaphore;
-
 import jus.poc.rw.Actor;
 import jus.poc.rw.Resource;
 import jus.poc.rw.Simulator;
@@ -9,111 +7,81 @@ import jus.poc.rw.control.IObservator;
 import jus.poc.rw.deadlock.DeadLockException;
 import jus.poc.rw.deadlock.IDetector;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class RWrsc extends Resource {
-	
-	int nb_readers;
-	int nb_writers;
-
-	Semaphore MutexW;
-	Semaphore MutexR;
-	Semaphore rsc;
-
-	/**
-	 * Pour bloquer les lecteurs HIGH_WRITE */
-	Semaphore SasR;
-	
-	
-	/**
-	 * Nombre de lectures restantes (pour LOW_WRITE)
+	// Notre verrou
+	ReentrantLock Lock = new ReentrantLock();
+	Condition high = Lock.newCondition();
+	Condition low = Lock.newCondition();
+	/*
+	 * Nombre de rédacteurs en attente
 	 */
-	int nr;
-	
+	int nb_writters;
+	int nb_lect;
+
 	public RWrsc(IDetector detector, IObservator observator) {
 		super(detector, observator);
-		nb_readers=0;
-		nb_writers=0;
-		MutexW =new Semaphore(1);
-		MutexR =new Semaphore(1);
-		SasR=new Semaphore(1);
-		rsc=new Semaphore(1);
-		nr=0;
+		nb_writters=0;
+		nb_lect=0;
 	}
 
 	@Override
 	public void beginR(Actor arg0) throws InterruptedException,
 			DeadLockException {
-		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			SasR.acquire();
-			System.out.println("(LECTEUR) [HIGH_WRITE] L'Acteur n°" + arg0.ident()+"a passé SAS_R");
+			Lock.lock();
+		while(nb_writters>0 && Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
+			System.out.println("(LECTEUR) [HIGH_WRITE] AWAIT (Acteur "+arg0.ident()+")");
+			high.await();
 		}
-		
-		MutexR.acquire();
-		if(nb_readers++==0){
-			rsc.acquire(); // Le premier lecteur prend le verrou sur la rsc
-		}
-		MutexR.release();
-		
-		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			SasR.release();
-			System.out.println("(LECTEUR) [HIGH_WRITE] L'Acteur n°" + arg0.ident()+"libère SAS_R");
-		}
-		
-		System.out.println("(LECTEUR) L'acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
+		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
-		
 	}
 
 	@Override
 	public void beginW(Actor arg0) throws InterruptedException,
 			DeadLockException {
-		MutexW.acquire();
-		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			if(nb_writers++==0){
-			SasR.acquire(); // On bloque les futurs lecteurs
-			System.out.println("(REDACTEUR) [HIGH_WRITE] L'Acteur n°" + arg0.ident()+"acquire SAS_R");
-			}
+		nb_writters++;
+		if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE") && nb_lect!=0){
+			System.out.println("(REDACTEUR) [LOW_WRITE] AWAIT (Acteur "+arg0.ident()+")");
+			low.await();
 		}
-		MutexW.release();
-		rsc.acquire();
-		
-		System.out.println("(REDACTEUR) L'acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
+		Lock.lock();
+		nb_writters--;
+		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
 
 	@Override
 	public void endR(Actor arg0) throws InterruptedException {
-		MutexR.acquire();
-		if(--nb_readers==0){
-			rsc.release();
+		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
+			System.out.println("(LECTEUR) [HIGH_WRITE] SIGNAL (Acteur "+arg0.ident()+")");
+			high.signal();
 		}
-		if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE") && nr>0){
-			nr--;
-			System.out.println("(LECTEUR) [LOW_WRITE]  Lectures restantes minimales "+ nr);
+		if(--nb_lect==0 && Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
+			System.out.println("(LECTEUR) [LOW_WRITE] SIGNAL ALL (Acteur "+arg0.ident()+")");
+			low.signalAll();
 		}
-		MutexR.release();
+		Lock.unlock();
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
+		// notif event deja effectue par la classe Reader
 	}
 
 	@Override
 	public void endW(Actor arg0) throws InterruptedException {
-		MutexW.acquire();
-		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			if(--nb_writers==0){
-				SasR.release();
-				System.out.println("(REDACTEUR) [HIGH_WRITE]  L'Acteur n°" + arg0.ident()+"libère SAS_R");
-			}
-		}else if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
-			nr=Simulator.NB_LECTURE;
-			System.out.println("(REDACTEUR) [LOW_WRITE]  On fixe le nb min de lectures a effectuer : "+nr);
+		if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
+			nb_lect=Simulator.NB_LECTURE;
+			System.out.println("(REDACTEUR) [LOW_WRITE] Prochaine écriture possible dans "+nb_lect+
+					" lectures terminées (Acteur "+arg0.ident()+")");
 		}
-		MutexW.release();
-		rsc.release();
+		Lock.unlock();
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
+		// Notif event deja effectue par la classe Writer
 	}
 
 	@Override
 	public void init(Object arg0) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException("(V3) methode init non suportee..\n");
+		throw new UnsupportedOperationException("(V1) methode init non suportee..\n");
 	}
-
 }
