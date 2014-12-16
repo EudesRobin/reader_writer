@@ -210,13 +210,7 @@ public class Simulator{
 			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 
 
-		}/*else if(version.equalsIgnoreCase("v3")){
-			/* V3 */
-			/*
-			 * LOW_WRITE : C'est la V1, pas de prio spéciales
-			 * HIGH_WRITE : On rajoute une condition
-			 
-		} */
+		}
 		
 		System.out.println("Fin de la simulation");
 

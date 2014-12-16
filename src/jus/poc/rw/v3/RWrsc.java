@@ -18,23 +18,27 @@ public class RWrsc extends Resource {
 	/*
 	 * Nombre de rédacteurs en attente
 	 */
-	int nb_writters;
-	int nb_lect;
+	int nb_writters=0;
+	int nb_readers=0;
 
 	public RWrsc(IDetector detector, IObservator observator) {
 		super(detector, observator);
+		nb_readers=0;
 		nb_writters=0;
-		nb_lect=0;
 	}
 
 	@Override
 	public void beginR(Actor arg0) throws InterruptedException,
 			DeadLockException {
-			Lock.lock();
+		nb_readers++;
+		
+		Lock.lock();
+		
 		while(nb_writters>0 && Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			System.out.println("(LECTEUR) [HIGH_WRITE] AWAIT (Acteur "+arg0.ident()+")");
 			high.await();
 		}
+		
+		nb_readers--;
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
@@ -43,11 +47,11 @@ public class RWrsc extends Resource {
 	public void beginW(Actor arg0) throws InterruptedException,
 			DeadLockException {
 		nb_writters++;
-		if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE") && nb_lect!=0){
-			System.out.println("(REDACTEUR) [LOW_WRITE] AWAIT (Acteur "+arg0.ident()+")");
+		Lock.lock();
+		while(nb_readers>0 && Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
 			low.await();
 		}
-		Lock.lock();
+		
 		nb_writters--;
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
@@ -56,24 +60,20 @@ public class RWrsc extends Resource {
 	@Override
 	public void endR(Actor arg0) throws InterruptedException {
 		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			System.out.println("(LECTEUR) [HIGH_WRITE] SIGNAL (Acteur "+arg0.ident()+")");
-			high.signal();
+			System.out.println("(LECTEUR) [HIGH_WRITE] SIGNAL ALL (Acteur "+arg0.ident()+")");
+			high.signalAll();
 		}
-		if(--nb_lect==0 && Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
-			System.out.println("(LECTEUR) [LOW_WRITE] SIGNAL ALL (Acteur "+arg0.ident()+")");
-			low.signalAll();
-		}
+		
 		Lock.unlock();
+		
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// notif event deja effectue par la classe Reader
 	}
 
 	@Override
 	public void endW(Actor arg0) throws InterruptedException {
-		if(Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
-			nb_lect=Simulator.NB_LECTURE;
-			System.out.println("(REDACTEUR) [LOW_WRITE] Prochaine écriture possible dans "+nb_lect+
-					" lectures terminées (Acteur "+arg0.ident()+")");
+		if((Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE"))){
+			low.signal();
 		}
 		Lock.unlock();
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
@@ -82,6 +82,6 @@ public class RWrsc extends Resource {
 
 	@Override
 	public void init(Object arg0) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException("(V1) methode init non suportee..\n");
+		throw new UnsupportedOperationException("(V3) methode init non suportee..\n");
 	}
 }
