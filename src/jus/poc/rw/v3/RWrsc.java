@@ -33,12 +33,12 @@ public class RWrsc extends Resource {
 		nb_readers++;
 		
 		Lock.lock();
-		
 		while(nb_writters>0 && Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
 			high.await();
 		}
 		
 		nb_readers--;
+		
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
@@ -47,12 +47,14 @@ public class RWrsc extends Resource {
 	public void beginW(Actor arg0) throws InterruptedException,
 			DeadLockException {
 		nb_writters++;
+		
 		Lock.lock();
 		while(nb_readers>0 && Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
 			low.await();
 		}
 		
 		nb_writters--;
+		
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
 		this.observator.acquireResource(arg0,this); // Event acquire rsc
 	}
@@ -60,8 +62,7 @@ public class RWrsc extends Resource {
 	@Override
 	public void endR(Actor arg0) throws InterruptedException {
 		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			System.out.println("(LECTEUR) [HIGH_WRITE] SIGNAL ALL (Acteur "+arg0.ident()+")");
-			high.signalAll();
+			high.signal();
 		}
 		
 		Lock.unlock();
@@ -76,6 +77,7 @@ public class RWrsc extends Resource {
 			low.signal();
 		}
 		Lock.unlock();
+		
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// Notif event deja effectue par la classe Writer
 	}

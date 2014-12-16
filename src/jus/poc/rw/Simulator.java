@@ -207,6 +207,18 @@ public class Simulator{
 				}
 			}
 			
+			/*  V3
+			 *  Les conditions d'arrêt identiques à la V1
+			 *  LOW_WRITE : attente des écrivains sur la cond low
+			 *  HIGH_WRITE : attente des lecteurs sur la cond high
+			 *  
+			 *  Réveille le prochain en attente dans les méthodes end*
+			 *  avant de libérer le verrou.
+			 *  
+			 *  Pb actuel : sequentialité dans les accès des lecteurs.
+			 *  */
+			
+			
 			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 
 
