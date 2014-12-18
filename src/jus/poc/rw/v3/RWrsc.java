@@ -9,17 +9,20 @@ import jus.poc.rw.deadlock.IDetector;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RWrsc extends Resource {
-	// Notre verrou
+
+	/* Notre verrou , avec nos conditions */
 	ReentrantLock Lock = new ReentrantLock();
 	Condition high = Lock.newCondition();
 	Condition low = Lock.newCondition();
-	/*
-	 * Nombre de rédacteurs en attente
-	 */
-	int nb_writters=0;
-	int nb_readers=0;
+	
+	/* Nombre de rédacteurs/lecteurs en attente */
+	int nb_writters,nb_readers;
+	
+	/* Pour permettre le parallélisme des lecteurs */
+	ReentrantReadWriteLock reentrantLock = new ReentrantReadWriteLock();
 
 	public RWrsc(IDetector detector, IObservator observator) {
 		super(detector, observator);
@@ -30,13 +33,14 @@ public class RWrsc extends Resource {
 	@Override
 	public void beginR(Actor arg0) throws InterruptedException,
 			DeadLockException {
-		nb_readers++;
 		
+		nb_readers++;
 		Lock.lock();
 		while(nb_writters>0 && Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
 			high.await();
 		}
-		
+		Lock.unlock();
+		reentrantLock.readLock().lock();
 		nb_readers--;
 		
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
@@ -52,7 +56,8 @@ public class RWrsc extends Resource {
 		while(nb_readers>0 && Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE")){
 			low.await();
 		}
-		
+		Lock.unlock();
+		reentrantLock.writeLock().lock();
 		nb_writters--;
 		
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" accède à la rsc n°"+this.ident);
@@ -61,11 +66,14 @@ public class RWrsc extends Resource {
 
 	@Override
 	public void endR(Actor arg0) throws InterruptedException {
-		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
-			high.signal();
-		}
 		
+		Lock.lock();
+		if(Simulator.getpolicy().equalsIgnoreCase("HIGH_WRITE")){
+			high.signalAll();
+		}
 		Lock.unlock();
+		
+		reentrantLock.readLock().unlock();
 		
 		System.out.println("(LECTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// notif event deja effectue par la classe Reader
@@ -73,11 +81,12 @@ public class RWrsc extends Resource {
 
 	@Override
 	public void endW(Actor arg0) throws InterruptedException {
+		Lock.lock();
 		if((Simulator.getpolicy().equalsIgnoreCase("LOW_WRITE"))){
 			low.signal();
 		}
 		Lock.unlock();
-		
+		reentrantLock.writeLock().unlock();
 		System.out.println("(REDACTEUR) L'Acteur n°"+arg0.ident()+" libère la rsc n°"+this.ident);
 		// Notif event deja effectue par la classe Writer
 	}

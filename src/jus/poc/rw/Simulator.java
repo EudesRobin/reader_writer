@@ -117,6 +117,7 @@ public class Simulator{
 			n++;
 		}
 
+		/* Init Writers */
 		while(n<nbReaders+nbWriters){
 			array_rw[n] = new Writer(new Aleatory(writerAverageUsingTime,writerDeviationUsingTime),
 					new Aleatory(writerAverageVacationTime,writerDeviationVacationTime),
@@ -136,8 +137,9 @@ public class Simulator{
 		}
 
 
-
-		if(version.equalsIgnoreCase("v1")||version.equalsIgnoreCase("v3")){
+		System.out.println("Simulation <CONFIG> " + version);
+		
+		if(version.equalsIgnoreCase("v1")){
 			/* V1 */
 			/* COMMENTS V1 - OBJECTIF 2 
 			 * 
@@ -154,44 +156,13 @@ public class Simulator{
 			 *  
 			 *   >> CHOIX : une fois que tout les rédacteurs ont effectués leurs taches, on termine tt les lectures.
 			 */
-			int fin_write=0;
-
-			while(fin_write!=nbWriters){
-				fin_write=0;
-				for(Actor acteur:array_rw){
-					if(acteur.getClass().getSimpleName().equalsIgnoreCase("Writer") && !acteur.isAlive()){
-						/* Si le thread associe au writer est "terminé" */
-						fin_write++;
-					}
-				}
-			}
-
-			System.out.println("(REDACTEUR) TOUS LES REDACTEURS ONT TERMINE");
-			System.out.println("On termine maintenant tout les lecteurs"); // on loop à l'infini, sinon...
-			for(Actor acteur:array_rw){
-				if(acteur.isAlive()){
-					acteur.clean_stop();
-				}
-			}
-			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
-
 			
+			wait_writers_dead(array_rw);
+			kill_readers(array_rw);
+		
 		}else if(version.equalsIgnoreCase("v2")){
 			/* V2 */
-			/* Compteur de redacteurs ayants terminés */
-			int fin_write=0;
-
-			while(fin_write!=nbWriters){
-				fin_write=0;
-				for(Actor acteur:array_rw){
-					if(acteur.getClass().getSimpleName().equalsIgnoreCase("Writer") && !acteur.isAlive()){
-						/* Si le thread associe au writer est "terminé" */
-						fin_write++;
-					}
-				}
-			}
-
-			System.out.println("TOUS LES REDACTEURS ONT TERMINE");
+			wait_writers_dead(array_rw);
 
 			/* On selectionne toute nos ressources à disposition */
 			IResource[] tab_rsc = pool.selection(nbResources);
@@ -206,22 +177,20 @@ public class Simulator{
 					}
 				}
 			}
-			
-			/*  V3
-			 *  Les conditions d'arrêt identiques à la V1
+			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
+		}else if(version.equalsIgnoreCase("v3")){
+			/* V3
+			 *  
 			 *  LOW_WRITE : attente des écrivains sur la cond low
 			 *  HIGH_WRITE : attente des lecteurs sur la cond high
 			 *  
-			 *  Réveille le prochain en attente dans les méthodes end*
+			 *  Réveille le (ou les pour les lecteurs) prochain en attente dans les méthodes end
 			 *  avant de libérer le verrou.
 			 *  
-			 *  Pb actuel : sequentialité dans les accès des lecteurs.
-			 *  */
-			
-			
-			System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
-
-
+			 */
+			System.out.println("POLICY <"+policy+">");
+			wait_writers_dead(array_rw);
+			kill_readers(array_rw);
 		}
 		
 		System.out.println("Fin de la simulation");
@@ -230,5 +199,34 @@ public class Simulator{
 
 	public static String getpolicy(){
 		return policy;
+	}
+	
+	/**
+	 * Attente de la mort de tous les rédacteurs
+	 * @param array_rw tableau d'acteurs ( lecteurs / rédacteurs )
+	 */
+	private static void wait_writers_dead(Actor[] array_rw){
+		int fin_write=0;
+		
+		while(fin_write!=nbWriters){
+			fin_write=0;
+			for(Actor acteur:array_rw){
+				if(acteur.getClass().getSimpleName().equalsIgnoreCase("Writer") && !acteur.isAlive()){
+					/* Si le thread associe au writer est "terminé" */
+					fin_write++;
+				}
+			}
+		}
+		System.out.println("(REDACTEUR) TOUS LES REDACTEURS ONT TERMINE");
+	}
+	
+	private static void kill_readers(Actor[] array_rw){
+		System.out.println("On termine maintenant tout les lecteurs"); // on loop à l'infini, sinon...
+		for(Actor acteur:array_rw){
+			if(acteur.isAlive()){
+				acteur.clean_stop();
+			}
+		}
+		System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 	}
 }
