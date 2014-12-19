@@ -26,7 +26,7 @@ public abstract class Actor extends Thread{
 	protected int nbIteration;
 	/** the rank of the last access done or under execution */
 	protected int accessRank;
-	
+
 	/* MODIF */
 	/* Pour arrêter les thread proprepement, sans être unsafe (à l'inverse de la méthode stop de thread */
 	protected boolean runable;
@@ -82,7 +82,9 @@ public abstract class Actor extends Thread{
 			try {
 				this.acquire(rsc);
 				System.out.println("acquire rsc n°"+rsc.ident());
-				sleep(5000);
+				if(Simulator.version.equalsIgnoreCase("v4")){ /* Afin de faciliter l'apparition d'IB*/
+					sleep(5000);
+				}
 			} catch (InterruptedException | DeadLockException e) {
 				e.printStackTrace();
 			}
@@ -94,11 +96,11 @@ public abstract class Actor extends Thread{
 	 */
 	private void release(){
 		for(IResource rsc:resources){
-				try {
-					this.release(rsc);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+			try {
+				this.release(rsc);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	/**
@@ -133,7 +135,7 @@ public abstract class Actor extends Thread{
 	 * @return the rank of the last access done or under execution
 	 */
 	public final int accessRank(){return accessRank;}
-	
+
 	public void clean_stop(){
 		runable=false;
 	}
