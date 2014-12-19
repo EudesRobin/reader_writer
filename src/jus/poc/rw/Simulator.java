@@ -3,6 +3,7 @@ package jus.poc.rw;
 
 import jus.poc.rw.control.Observator;
 import jus.poc.rw.v2.RWrsc;
+import jus.poc.rw.v4.Detector;
 
 
 
@@ -46,6 +47,8 @@ public class Simulator{
 	protected static String policy;
 	
 	protected static ResourcePool pool;
+	
+	public static Detector detect;
 	
 	/**
 	 * make a permutation of the array
@@ -101,9 +104,11 @@ public class Simulator{
 		Observator observator = new Observator(null); // controler = null pour l'instant
 		observator.init(nbReaders+nbWriters,nbResources);
 
+		/* Init Detector */
+		detect = new Detector(nbReaders+nbWriters,nbResources);
 
 		/* init ressource pool*/
-		pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
+		pool = new ResourcePool(nbResources,detect,observator,"jus.poc.rw."+version+".RWrsc");
 
 
 		Actor[] array_rw = new Actor[nbReaders+nbWriters];
