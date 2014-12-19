@@ -48,6 +48,10 @@ public class Detector implements IDetector {
 
 	}
 
+	/*
+	 * BUG ACTUEL : detecte seulement les cycles faisant intervenir qu'un seul autre acteur
+	 * (tentative infrctueuse de prolonger la recherche de cycles en profondeur en commentaires).
+	 */
 	public void detectDeadlock(Actor arg0, IResource arg1)
 			throws DeadLockException{
 
