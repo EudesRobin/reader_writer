@@ -44,6 +44,9 @@ public class Simulator{
 	protected static int writerDeviationIteration;
 	/** the chosen policy for priority */
 	protected static String policy;
+	
+	protected static ResourcePool pool;
+	
 	/**
 	 * make a permutation of the array
 	 * @param array the array to be mixed
@@ -100,7 +103,7 @@ public class Simulator{
 
 
 		/* init ressource pool*/
-		ResourcePool pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
+		pool = new ResourcePool(nbResources,null,observator,"jus.poc.rw."+version+".RWrsc");
 
 
 		Actor[] array_rw = new Actor[nbReaders+nbWriters];
@@ -231,5 +234,13 @@ public class Simulator{
 			}
 		}
 		//System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
+	}
+	
+	public static ResourcePool get_pool(){
+		return pool;
+	}
+	
+	public static int get_nbrsc(){
+		return nbResources;
 	}
 }
