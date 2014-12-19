@@ -191,9 +191,12 @@ public class Simulator{
 			System.out.println("POLICY <"+policy+">");
 			wait_writers_dead(array_rw);
 			kill_readers(array_rw);
+		}else if(version.equalsIgnoreCase("v4")){
+			
+			
 		}
 		
-		System.out.println("Fin de la simulation");
+		//System.out.println("Fin de la simulation");
 
 	}
 
@@ -227,6 +230,6 @@ public class Simulator{
 				acteur.clean_stop();
 			}
 		}
-		System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
+		//System.out.println("(LECTEUR) TOUS LES LECTEURS ONT TERMINE");
 	}
 }

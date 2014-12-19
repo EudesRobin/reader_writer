@@ -81,10 +81,13 @@ public abstract class Actor extends Thread{
 		for(IResource rsc:resources){
 			try {
 				this.acquire(rsc);
+				System.out.println("acquire rsc n°"+rsc.ident());
+				sleep(5000);
 			} catch (InterruptedException | DeadLockException e) {
 				e.printStackTrace();
 			}
 		}
+		//System.out.println("Toutes les ressources requises par l'acteur sont acquises");
 	}
 	/**
 	 * the release stage of the resources prevously acquired
